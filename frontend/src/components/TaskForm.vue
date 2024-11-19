@@ -40,7 +40,11 @@
       async handleSubmit() {
         try {
 
-          await axios.post("http://127.0.0.1:5000/tasks", this.task);
+            await axios.post("http://127.0.0.1:5000/tasks", this.task, {
+                headers: {
+                    Authorization: "Bearer mysecrettoken",
+                },
+                });
   
 
           this.$emit("taskUpdated");

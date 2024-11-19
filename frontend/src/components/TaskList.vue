@@ -28,30 +28,42 @@
       };
     },
     methods: {
-      async fetchTasks() {
-        try {
-          const response = await axios.get("http://127.0.0.1:5000/tasks");
-          this.tasks = response.data;
-        } catch (error) {
-          console.error("Error fetching tasks:", error);
-        }
-      },
-      async markComplete(id) {
-        try {
-          await axios.patch(`http://127.0.0.1:5000/tasks/${id}/complete`);
-          this.fetchTasks();
-        } catch (error) {
-          console.error("Error marking task complete:", error);
-        }
-      },
-      async deleteTask(id) {
-        try {
-          await axios.delete(`http://127.0.0.1:5000/tasks/${id}`);
-          this.fetchTasks();
-        } catch (error) {
-          console.error("Error deleting task:", error);
-        }
-      },
+        async fetchTasks() {
+            try {
+                const response = await axios.get("http://127.0.0.1:5000/tasks", {
+                headers: {
+                    Authorization: "Bearer mysecrettoken",
+                },
+                });
+                this.tasks = response.data;
+            } catch (error) {
+                console.error("Error fetching tasks:", error);
+            }
+            },
+            async markComplete(id) {
+                try {
+                    await axios.patch(`http://127.0.0.1:5000/tasks/${id}/complete`, null, {
+                    headers: {
+                        Authorization: "Bearer mysecrettoken",
+                    },
+                    });
+                    this.fetchTasks();
+                } catch (error) {
+                    console.error("Error marking task complete:", error);
+                }
+            },
+            async deleteTask(id) {
+                try {
+                    await axios.delete(`http://127.0.0.1:5000/tasks/${id}`, {
+                    headers: {
+                        Authorization: "Bearer mysecrettoken",
+                    },
+                    });
+                    this.fetchTasks();
+                } catch (error) {
+                    console.error("Error deleting task:", error);
+                }
+            },
     },
     watch: {
       refreshKey: {

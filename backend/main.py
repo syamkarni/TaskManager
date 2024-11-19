@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_cors import CORS
+from functools import wraps
 
 #####backend configuration#######
 app = Flask(__name__)
@@ -29,9 +30,21 @@ with app.app_context():
 ################################
 
 
+##### Basic Authentication #######
+def require_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.headers.get('Authorization')
+        if not auth or auth != "Bearer mysecrettoken":
+            return jsonify({"error": "Unauthorized"}), 401
+        return f(*args, **kwargs)
+    return decorated
+################################
 
-###All api routes here###
+
+### All API routes here ###
 @app.route('/tasks', methods=['GET'])
+@require_auth
 def get_tasks():
     tasks = Task.query.all()
     return jsonify([{
@@ -42,9 +55,10 @@ def get_tasks():
         "status": task.status,
         "created_at": task.created_at.strftime('%Y-%m-%d %H:%M:%S'),
         "updated_at": task.updated_at.strftime('%Y-%m-%d %H:%M:%S')
-    } for task in tasks])
+    } for task in tasks]), 200
 
 @app.route('/tasks/<int:id>', methods=['GET'])
+@require_auth
 def get_task(id):
     task = Task.query.get_or_404(id)
     return jsonify({
@@ -55,47 +69,66 @@ def get_task(id):
         "status": task.status,
         "created_at": task.created_at.strftime('%Y-%m-%d %H:%M:%S'),
         "updated_at": task.updated_at.strftime('%Y-%m-%d %H:%M:%S')
-    })
+    }), 200
 
 @app.route('/tasks', methods=['POST'])
+@require_auth
 def create_task():
     data = request.json
-    new_task = Task(
-        title=data['title'],
-        description=data['description'],
-        due_date=datetime.strptime(data['due_date'], '%Y-%m-%d'),
-        status=data.get('status', 'pending')
-    )
-    db.session.add(new_task)
-    db.session.commit()
-    return jsonify({"message": "Task created", "task_id": new_task.id}), 201
+    if not data or not all(key in data for key in ('title', 'description', 'due_date')):
+        return jsonify({"error": "Invalid input"}), 400
+    try:
+        new_task = Task(
+            title=data['title'],
+            description=data['description'],
+            due_date=datetime.strptime(data['due_date'], '%Y-%m-%d'),
+            status=data.get('status', 'pending')
+        )
+        db.session.add(new_task)
+        db.session.commit()
+        return jsonify({"message": "Task created", "task_id": new_task.id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/tasks/<int:id>', methods=['PUT'])
+@require_auth
 def update_task(id):
     task = Task.query.get_or_404(id)
     data = request.json
-    task.title = data.get('title', task.title)
-    task.description = data.get('description', task.description)
-    if 'due_date' in data:
-        task.due_date = datetime.strptime(data['due_date'], '%Y-%m-%d')
-    task.status = data.get('status', task.status)
-    db.session.commit()
-    return jsonify({"message": "Task updated"})
+    if not data:
+        return jsonify({"error": "Invalid input"}), 400
+    try:
+        task.title = data.get('title', task.title)
+        task.description = data.get('description', task.description)
+        if 'due_date' in data:
+            task.due_date = datetime.strptime(data['due_date'], '%Y-%m-%d')
+        task.status = data.get('status', task.status)
+        db.session.commit()
+        return jsonify({"message": "Task updated"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/tasks/<int:id>', methods=['DELETE'])
+@require_auth
 def delete_task(id):
     task = Task.query.get_or_404(id)
-    db.session.delete(task)
-    db.session.commit()
-    return jsonify({"message": "Task deleted"})
+    try:
+        db.session.delete(task)
+        db.session.commit()
+        return jsonify({"message": "Task deleted"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/tasks/<int:id>/complete', methods=['PATCH'])
+@require_auth
 def mark_task_complete(id):
     task = Task.query.get_or_404(id)
-    task.status = 'completed'
-    db.session.commit()
-    return jsonify({"message": "Task marked as complete"})
-
+    try:
+        task.status = 'completed'
+        db.session.commit()
+        return jsonify({"message": "Task marked as complete"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 ################################
 
 

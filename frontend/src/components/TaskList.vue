@@ -16,6 +16,12 @@
   import axios from "axios";
   
   export default {
+    props: {
+      refreshKey: {
+        type: Number,
+        required: true,
+      },
+    },
     data() {
       return {
         tasks: [],
@@ -47,8 +53,13 @@
         }
       },
     },
-    mounted() {
-      this.fetchTasks();
+    watch: {
+      refreshKey: {
+        handler() {
+          this.fetchTasks();
+        },
+        immediate: true,
+      },
     },
   };
   </script>

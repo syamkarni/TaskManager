@@ -1,20 +1,24 @@
 <template>
     <div>
-      <h2>{{ isEditing ? "Edit Task" : "Add New Task" }}</h2>
       <form @submit.prevent="handleSubmit">
-        <label>
-          Title:
-          <input v-model="task.title" required />
-        </label>
-        <label>
-          Description:
-          <textarea v-model="task.description" required></textarea>
-        </label>
-        <label>
-          Due Date:
-          <input type="date" v-model="task.due_date" required />
-        </label>
-        <button type="submit">{{ isEditing ? "Update Task" : "Create Task" }}</button>
+        <div>
+          <label for="title">Title:</label>
+          <input id="title" v-model="task.title" placeholder="Enter task title" required />
+        </div>
+        <div>
+          <label for="description">Description:</label>
+          <textarea
+            id="description"
+            v-model="task.description"
+            placeholder="Enter task description"
+            required
+          ></textarea>
+        </div>
+        <div>
+          <label for="due_date">Due Date:</label>
+          <input id="due_date" type="date" v-model="task.due_date" required />
+        </div>
+        <button type="submit">Create Task</button>
       </form>
     </div>
   </template>
@@ -23,12 +27,6 @@
   import axios from "axios";
   
   export default {
-    props: {
-      taskToEdit: {
-        type: Object,
-        default: null,
-      },
-    },
     data() {
       return {
         task: {
@@ -36,35 +34,26 @@
           description: "",
           due_date: "",
         },
-        isEditing: false,
       };
     },
     methods: {
       async handleSubmit() {
         try {
-          if (this.isEditing) {
-            await axios.put(`http://127.0.0.1:5000/tasks/${this.taskToEdit.id}`, this.task);
-          } else {
-            await axios.post("http://127.0.0.1:5000/tasks", this.task);
-          }
+
+          await axios.post("http://127.0.0.1:5000/tasks", this.task);
+  
+
           this.$emit("taskUpdated");
+  
+
+          this.task = {
+            title: "",
+            description: "",
+            due_date: "",
+          };
         } catch (error) {
-          console.error("Error submitting task:", error);
+          console.error("Error creating task:", error);
         }
-      },
-    },
-    watch: {
-      taskToEdit: {
-        handler(newValue) {
-          if (newValue) {
-            this.task = { ...newValue };
-            this.isEditing = true;
-          } else {
-            this.task = { title: "", description: "", due_date: "" };
-            this.isEditing = false;
-          }
-        },
-        immediate: true,
       },
     },
   };

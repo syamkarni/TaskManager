@@ -1,26 +1,39 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div id="app">
+    <header>
+      <h1>Task Manager</h1>
+    </header>
+    <main>
+      <section class="task-form">
+        <TaskForm @taskUpdated="refreshTasks" />
+      </section>
+      <section class="task-list">
+        <TaskList :refreshKey="refreshKey" />
+      </section>
+    </main>
+  </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import TaskForm from './components/TaskForm.vue';
+import TaskList from './components/TaskList.vue';
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
-  }
-}
+    TaskForm,
+    TaskList,
+  },
+  data() {
+    return {
+      refreshKey: 0,
+    };
+  },
+  methods: {
+    refreshTasks() {
+      this.refreshKey += 1;
+    },
+  },
+};
 </script>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
